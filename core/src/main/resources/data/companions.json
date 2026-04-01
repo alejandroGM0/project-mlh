@@ -1,0 +1,98 @@
+[
+    {
+        "id": "companion1",
+        "name": "Lead Companion",
+        "description": "The initial squad companion with a standard rifle",
+        "health": 220,
+        "damage": 22,
+        "speed": 320.0,
+        "weaponId": "rifle",
+        "atlas_path": "characters/militar1/atlas.atlas",
+        "rarityWeight": 3,
+        "followDistance": 400.0
+    },
+    {
+        "id": "soldier",
+        "name": "Soldier",
+        "description": "A basic soldier with an assault rifle",
+        "health": 200,
+        "damage": 20,
+        "speed": 300.0,
+        "weaponId": "assault_rifle",
+        "atlas_path": "characters/militar1/atlas.atlas",
+        "rarityWeight": 3,
+        "followDistance": 400.0
+    },
+    {
+        "id": "sniper",
+        "name": "Sniper",
+        "description": "Long-range shooting specialist",
+        "health": 120,
+        "damage": 40,
+        "speed": 280.0,
+        "weaponId": "sniper_rifle",
+        "atlas_path": "characters/player/player.atlas",
+        "rarityWeight": 2,
+        "followDistance": 500.0
+    },
+    {
+        "id": "medic",
+        "name": "Field Medic",
+        "description": "Provides medical support with a backup pistol",
+        "health": 160,
+        "damage": 12,
+        "speed": 310.0,
+        "weaponId": "pistol",
+        "atlas_path": "characters/player/player.atlas",
+        "rarityWeight": 2,
+        "followDistance": 350.0
+    },
+    {
+        "id": "heavy",
+        "name": "Heavy Gunner",
+        "description": "Tank with a light machine gun",
+        "health": 360,
+        "damage": 30,
+        "speed": 220.0,
+        "weaponId": "light_machine_gun",
+        "atlas_path": "characters/player/player.atlas",
+        "rarityWeight": 1,
+        "followDistance": 400.0
+    },
+    {
+        "id": "scout",
+        "name": "Scout",
+        "description": "Fast and agile with a submachine gun",
+        "health": 140,
+        "damage": 16,
+        "speed": 380.0,
+        "weaponId": "submachine_gun",
+        "atlas_path": "characters/player/player.atlas",
+        "rarityWeight": 3,
+        "followDistance": 350.0
+    },
+    {
+        "id": "engineer",
+        "name": "Engineer",
+        "description": "Close combat specialist with a shotgun",
+        "health": 180,
+        "damage": 22,
+        "speed": 280.0,
+        "weaponId": "shotgun",
+        "atlas_path": "characters/militar1/atlas.atlas",
+        "rarityWeight": 1,
+        "followDistance": 300.0
+    },
+    {
+        "id": "militar1",
+        "name": "Veteran Soldier",
+        "description": "Veteran infantry equipped with a high-caliber revolver",
+        "health": 230,
+        "damage": 24,
+        "speed": 310.0,
+        "weaponId": "revolver",
+        "atlas_path": "characters/militar1/atlas.atlas",
+        "rarityWeight": 2,
+        "followDistance": 420.0
+    }
+]

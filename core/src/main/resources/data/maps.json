@@ -1,0 +1,14 @@
+[
+  {
+    "id": "newIsometricMap",
+    "tmxPath": "maps/newIsometricMap.tmx",
+    "name": "Mapa Isométrico",
+    "spawnX": 100,
+    "spawnY": 100,
+    "mapWidth": 0,
+    "mapHeight": 0,
+    "tileSize": 32,
+    "backgroundMusic": null,
+    "lightingConfig": null
+  }
+]
