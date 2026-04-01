@@ -1,0 +1,127 @@
+buildscript {
+  repositories {
+    mavenCentral()
+    maven { url 'https://s01.oss.sonatype.org' }
+    gradlePluginPortal()
+    mavenLocal()
+    google()
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
+    maven { url 'https://s01.oss.sonatype.org/content/repositories/snapshots/' }
+  }
+  dependencies {
+
+
+  }
+}
+
+plugins {
+  id 'com.diffplug.spotless' version '6.25.0' apply false
+}
+
+allprojects {
+  apply plugin: 'eclipse'
+  apply plugin: 'idea'
+
+  // This allows you to "Build and run using IntelliJ IDEA", an option in IDEA's Settings.
+  idea {
+    module {
+      outputDir file('build/classes/java/main')
+      testOutputDir file('build/classes/java/test')
+    }
+  }
+}
+
+configure(subprojects) {
+  apply plugin: 'java-library'
+  apply plugin: 'checkstyle'
+  apply plugin: 'com.diffplug.spotless'
+  sourceCompatibility = 8
+
+  checkstyle {
+    toolVersion = '10.18.2'
+    configFile = rootProject.file('checkstyle.xml')
+    ignoreFailures = true
+    showViolations = true
+  }
+
+  tasks.withType(Checkstyle).configureEach {
+    reports {
+      xml.required = true
+      html.required = true
+    }
+  }
+
+  spotless {
+    java {
+      target 'src/*/java/**/*.java'
+      removeUnusedImports()
+      googleJavaFormat('1.17.0')
+      formatAnnotations()
+    }
+  }
+
+  // From https://lyze.dev/2021/04/29/libGDX-Internal-Assets-List/
+  // The article can be helpful when using assets.txt in your project.
+  tasks.register('generateAssetList') {
+    inputs.dir("${project.rootDir}/assets/")
+    // projectFolder/assets
+    File assetsFolder = new File("${project.rootDir}/assets/")
+    // projectFolder/assets/assets.txt
+    File assetsFile = new File(assetsFolder, "assets.txt")
+    // delete that file in case we've already created it
+    assetsFile.delete()
+
+    // iterate through all files inside that folder
+    // convert it to a relative path
+    // and append it to the file assets.txt
+    fileTree(assetsFolder).collect { assetsFolder.relativePath(it) }.sort().each {
+      assetsFile.append(it + "\n")
+    }
+  }
+  processResources.dependsOn 'generateAssetList'
+
+  tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.incremental = true
+  }
+
+  tasks.register('styleCheck') {
+    group = 'verification'
+    description = "Runs formatting and Checkstyle checks for ${project.path}."
+    dependsOn 'spotlessCheck', 'checkstyleMain'
+  }
+
+  tasks.register('styleApply') {
+    group = 'formatting'
+    description = "Applies automatic Java formatting for ${project.path}."
+    dependsOn 'spotlessApply'
+  }
+}
+
+subprojects {
+  version = "$projectVersion"
+  ext.appName = 'proyectoM'
+  repositories {
+    mavenCentral()
+    maven { url 'https://s01.oss.sonatype.org' }
+    // You may want to remove the following line if you have errors downloading dependencies.
+    mavenLocal()
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
+    maven { url 'https://s01.oss.sonatype.org/content/repositories/snapshots/' }
+    maven { url 'https://jitpack.io' }
+  }
+}
+
+eclipse.project.name = 'proyectoM' + '-parent'
+
+tasks.register('styleCheck') {
+  group = 'verification'
+  description = 'Runs formatting and Checkstyle checks for all Java subprojects.'
+  dependsOn subprojects.collect { "${it.path}:styleCheck" }
+}
+
+tasks.register('styleApply') {
+  group = 'formatting'
+  description = 'Applies automatic Java formatting for all Java subprojects.'
+  dependsOn subprojects.collect { "${it.path}:styleApply" }
+}

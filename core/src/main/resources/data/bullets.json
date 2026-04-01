@@ -1,0 +1,37 @@
+{
+  "player_bullet": {
+    "id": "player_bullet",
+    "speed": 900,
+    "sprite": "weapons/bullets/bullet2.png",
+    "scale": 0.02,
+    "maxdistance": 800
+  },
+  "player_bullet2": {
+    "id": "player_bullet2",
+    "speed": 1200,
+    "sprite": "weapons/bullets/bullet2.png",
+    "scale": 0.01,
+    "maxdistance": 1000
+  },
+  "heavy_bullet": {
+    "id": "heavy_bullet",
+    "speed": 800,
+    "sprite": "weapons/bullets/bullet2.png",
+    "scale": 0.35,
+    "maxdistance": 900
+  },
+  "sniper_bullet": {
+    "id": "sniper_bullet",
+    "speed": 1800,
+    "sprite": "weapons/bullets/bullet2.png",
+    "scale": 0.02,
+    "maxdistance": 1600
+  },
+  "fast_bullet": {
+    "id": "fast_bullet",
+    "speed": 1400,
+    "sprite": "weapons/bullets/bullet2.png",
+    "scale": 0.01,
+    "maxdistance": 600
+  }
+}
