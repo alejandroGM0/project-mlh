@@ -13,6 +13,7 @@ import java.util.Objects;
 public class ScreenManager {
   public enum ScreenType {
     MAIN_MENU,
+    GAME_SETUP,
     GAME,
     PAUSE,
     SETTINGS,
@@ -69,6 +70,7 @@ public class ScreenManager {
   /** Removes cached menu screens so they are recreated with fresh translations. */
   public void clearMenuScreenCaches() {
     disposeCachedScreen(ScreenType.MAIN_MENU);
+    disposeCachedScreen(ScreenType.GAME_SETUP);
     disposeCachedScreen(ScreenType.PAUSE);
     disposeCachedScreen(ScreenType.SETTINGS);
     disposeCachedScreen(ScreenType.OPTIONS);
@@ -90,12 +92,22 @@ public class ScreenManager {
    * its own initialization.
    */
   void showNewGameScreen() {
+    showNewGameScreen(null, null);
+  }
+
+  /**
+   * Creates a fresh gameplay screen after a session reset, loading the specified map.
+   *
+   * @param mapId the registry identifier of the map to load, or null for default
+   * @param gameMode the selected game mode, or null for default
+   */
+  void showNewGameScreen(String mapId, GameMode gameMode) {
     disposeCachedScreen(ScreenType.GAME);
     PhysicsWorldProvider.resetWorld();
     clearMenuStage();
     clearGameStage();
 
-    GameScreen gameScreen = new GameScreen(game);
+    GameScreen gameScreen = new GameScreen(game, mapId, gameMode);
     screenCache.put(ScreenType.GAME, gameScreen);
     game.setScreen(gameScreen);
   }
@@ -126,10 +138,12 @@ public class ScreenManager {
     switch (type) {
       case MAIN_MENU:
         return new MainMenuScreen(game);
+      case GAME_SETUP:
+        return new GameSetupScreen(game);
       case GAME:
-        return new GameScreen(game);
+        return new GameScreen(game, null, null);
       case PAUSE:
-        return new PauseMenuScreen(game, screenCache.get(ScreenType.GAME));
+        return new PauseMenuScreen(game);
       case SETTINGS:
         return new SettingsScreen(game);
       case OPTIONS:

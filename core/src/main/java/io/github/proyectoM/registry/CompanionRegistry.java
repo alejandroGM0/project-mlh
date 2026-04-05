@@ -2,7 +2,6 @@ package io.github.proyectoM.registry;
 
 import com.badlogic.gdx.utils.JsonValue;
 import io.github.proyectoM.templates.CharacterTemplate;
-import java.util.HashSet;
 import java.util.Set;
 
 /** Loads and exposes companion templates from {@code data/companions.json}. */
@@ -67,12 +66,8 @@ public final class CompanionRegistry extends AbstractJsonRegistry<CharacterTempl
     return INSTANCE.getAll().keySet();
   }
 
-  /** Returns the set of all atlas paths referenced by loaded companion templates. */
-  public Set<String> getAllAtlasPaths() {
-    Set<String> atlasPaths = new HashSet<>();
-    for (CharacterTemplate template : getAll().values()) {
-      addIfPresent(atlasPaths, template.atlas_path);
-    }
-    return atlasPaths;
+  @Override
+  protected void collectAtlasPaths(CharacterTemplate template, Set<String> paths) {
+    addIfPresent(paths, template.atlas_path);
   }
 }

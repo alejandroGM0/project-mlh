@@ -28,36 +28,19 @@ public class BulletFactory {
   private static final float BULLET_RADIUS_DIVISOR = 2f;
   private static final float INITIAL_DISTANCE_TRAVELLED = 0f;
 
-  private static BulletFactory instance;
-
-  private Engine engine;
+  private final Engine engine;
   private final ObjectMap<String, TextureRegion> textureCache = new ObjectMap<>();
   private final BodyDef reusableBodyDef = new BodyDef();
   private final FixtureDef reusableFixtureDef = new FixtureDef();
   private CircleShape reusableShape;
 
-  private BulletFactory(Engine engine) {
+  public BulletFactory(Engine engine) {
     this.engine = engine;
     this.reusableShape = new CircleShape();
     reusableFixtureDef.density = BODY_DENSITY;
     reusableFixtureDef.restitution = BODY_RESTITUTION;
     reusableFixtureDef.friction = BODY_FRICTION;
     reusableFixtureDef.isSensor = true;
-  }
-
-  /** Resets the factory for a new game session with a fresh engine reference. */
-  public static void initialize(Engine newEngine) {
-    if (instance != null) {
-      instance.dispose();
-    }
-    instance = new BulletFactory(newEngine);
-  }
-
-  public static BulletFactory getInstance() {
-    if (instance == null) {
-      throw new IllegalStateException("BulletFactory.initialize(Engine) must be called first.");
-    }
-    return instance;
   }
 
   /**
@@ -185,7 +168,7 @@ public class BulletFactory {
     entity.add(physics);
   }
 
-  private void dispose() {
+  public void dispose() {
     textureCache.clear();
     if (reusableShape != null) {
       reusableShape.dispose();

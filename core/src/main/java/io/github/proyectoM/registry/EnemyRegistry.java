@@ -2,7 +2,6 @@ package io.github.proyectoM.registry;
 
 import com.badlogic.gdx.utils.JsonValue;
 import io.github.proyectoM.templates.CharacterTemplate;
-import java.util.HashSet;
 import java.util.Set;
 
 /** Loads and exposes enemy templates from {@code data/enemies.json}. */
@@ -62,12 +61,8 @@ public final class EnemyRegistry extends AbstractJsonRegistry<CharacterTemplate>
     return INSTANCE.getAll().keySet();
   }
 
-  /** Returns the set of all atlas paths referenced by loaded enemy templates. */
-  public Set<String> getAllAtlasPaths() {
-    Set<String> atlasPaths = new HashSet<>();
-    for (CharacterTemplate template : getAll().values()) {
-      addIfPresent(atlasPaths, template.atlas_path);
-    }
-    return atlasPaths;
+  @Override
+  protected void collectAtlasPaths(CharacterTemplate template, Set<String> paths) {
+    addIfPresent(paths, template.atlas_path);
   }
 }

@@ -6,7 +6,6 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.JsonReader;
 import com.badlogic.gdx.utils.JsonValue;
 import io.github.proyectoM.templates.WeaponTemplate;
-import java.util.HashSet;
 import java.util.Set;
 
 /** Loads and exposes weapon templates from {@code data/weapons.json}. */
@@ -63,14 +62,10 @@ public final class WeaponRegistry extends AbstractJsonRegistry<WeaponTemplate> {
     return template != null ? template.attackRange : DEFAULT_ATTACK_RANGE_FALLBACK;
   }
 
-  /** Returns the set of all atlas paths referenced by loaded weapon templates. */
-  public Set<String> getAllAtlasPaths() {
-    Set<String> atlasPaths = new HashSet<>();
-    for (WeaponTemplate template : getAll().values()) {
-      addIfPresent(atlasPaths, template.atlas);
-      addIfPresent(atlasPaths, template.flashAtlas);
-    }
-    return atlasPaths;
+  @Override
+  protected void collectAtlasPaths(WeaponTemplate template, Set<String> paths) {
+    addIfPresent(paths, template.atlas);
+    addIfPresent(paths, template.flashAtlas);
   }
 
   private static void loadMuzzlePoints(WeaponTemplate template) {

@@ -6,7 +6,6 @@ import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.World;
-import io.github.proyectoM.components.companion.CompanionComponent;
 import io.github.proyectoM.components.entity.ParentComponent;
 import io.github.proyectoM.components.entity.animation.MovementDirectionStateComponent;
 import io.github.proyectoM.components.entity.combat.DamageComponent;
@@ -14,6 +13,7 @@ import io.github.proyectoM.components.entity.movement.PositionComponent;
 import io.github.proyectoM.components.entity.weapon.BulletComponent;
 import io.github.proyectoM.components.entity.weapon.MuzzlePointComponent;
 import io.github.proyectoM.components.entity.weapon.WeaponComponent;
+import io.github.proyectoM.components.entity.weapon.WeaponStateComponent;
 import io.github.proyectoM.components.entity.weapon.types.RangedWeaponComponent;
 import io.github.proyectoM.factories.BulletFactory;
 import io.github.proyectoM.registry.BulletRegistry;
@@ -26,6 +26,8 @@ public class RangedWeaponSystem extends IteratingSystem {
 
   private final ComponentMapper<WeaponComponent> weaponMapper =
       ComponentMapper.getFor(WeaponComponent.class);
+  private final ComponentMapper<WeaponStateComponent> weaponStateMapper =
+      ComponentMapper.getFor(WeaponStateComponent.class);
   private final ComponentMapper<RangedWeaponComponent> rangedMapper =
       ComponentMapper.getFor(RangedWeaponComponent.class);
   private final ComponentMapper<ParentComponent> parentMapper =
@@ -34,72 +36,67 @@ public class RangedWeaponSystem extends IteratingSystem {
       ComponentMapper.getFor(PositionComponent.class);
   private final ComponentMapper<DamageComponent> damageMapper =
       ComponentMapper.getFor(DamageComponent.class);
-  private final ComponentMapper<CompanionComponent> companionMapper =
-      ComponentMapper.getFor(CompanionComponent.class);
   private final ComponentMapper<MovementDirectionStateComponent> movementMapper =
       ComponentMapper.getFor(MovementDirectionStateComponent.class);
   private final ComponentMapper<MuzzlePointComponent> muzzlePointMapper =
       ComponentMapper.getFor(MuzzlePointComponent.class);
 
   private final World world;
+  private final BulletFactory bulletFactory;
+  private final BulletRegistry bulletRegistry;
   private final Vector2 velocity = new Vector2();
 
-  public RangedWeaponSystem(World world) {
+  public RangedWeaponSystem(World world, BulletFactory bulletFactory, BulletRegistry bulletRegistry) {
     super(
         Family.all(RangedWeaponComponent.class, WeaponComponent.class, ParentComponent.class)
             .get());
     this.world = world;
+    this.bulletFactory = bulletFactory;
+    this.bulletRegistry = bulletRegistry;
   }
 
   @Override
   protected void processEntity(Entity weaponEntity, float deltaTime) {
     WeaponComponent weapon = weaponMapper.get(weaponEntity);
-    updateCooldown(weapon, deltaTime);
+    WeaponStateComponent weaponState = weaponStateMapper.get(weaponEntity);
+    updateCooldown(weaponState, deltaTime);
 
-    if (weapon.targetEntity == null) {
-      weapon.isAttacking = false;
+    if (weaponState.targetEntity == null) {
+      weaponState.isAttacking = false;
       return;
     }
 
-    weapon.isAttacking = true;
-    if (weapon.cooldown > 0f) {
+    weaponState.isAttacking = true;
+    if (weaponState.cooldown > 0f) {
       return;
     }
 
-    fireBullet(weaponEntity, weapon, rangedMapper.get(weaponEntity));
-    weapon.cooldown = weapon.attackSpeed;
+    fireBullet(weaponEntity, weapon, weaponState, rangedMapper.get(weaponEntity));
+    weaponState.cooldown = weapon.attackSpeed;
   }
 
-  private void updateCooldown(WeaponComponent weapon, float deltaTime) {
-    if (weapon.cooldown > 0f) {
-      weapon.cooldown -= deltaTime;
+  private void updateCooldown(WeaponStateComponent weaponState, float deltaTime) {
+    if (weaponState.cooldown > 0f) {
+      weaponState.cooldown -= deltaTime;
     }
   }
 
   private void fireBullet(
-      Entity weaponEntity, WeaponComponent weapon, RangedWeaponComponent rangedWeapon) {
+      Entity weaponEntity, WeaponComponent weapon, WeaponStateComponent weaponState,
+      RangedWeaponComponent rangedWeapon) {
     Entity owner = parentMapper.get(weaponEntity).parent;
-    if (owner == null || weapon.targetEntity == null) {
-      return;
-    }
-
     MuzzlePointComponent muzzlePoint = muzzlePointMapper.get(owner);
-    PositionComponent targetPosition = positionMapper.get(weapon.targetEntity);
-    BulletTemplate bulletTemplate =
-        BulletRegistry.getInstance().getTemplate(rangedWeapon.bulletType);
-    if (muzzlePoint == null || targetPosition == null || bulletTemplate == null) {
-      return;
-    }
+    PositionComponent targetPosition = positionMapper.get(weaponState.targetEntity);
+    BulletTemplate bulletTemplate = bulletRegistry.getTemplate(rangedWeapon.bulletType);
 
-    weapon.flashTimer = FLASH_DURATION;
+    weaponState.flashTimer = FLASH_DURATION;
     calculateVelocity(muzzlePoint, targetPosition, bulletTemplate.speed);
 
-    float targetAngle = velocity.angleDeg();
-    float startAngle = getVisualAngle(owner, targetAngle);
-    int damage = Math.round(getDamage(owner));
+    float startAngle = movementMapper.get(owner).faceAngle;
+    int damage = damageMapper.get(owner).damage;
 
     Entity bulletEntity =
-        BulletFactory.getInstance()
+        bulletFactory
             .createBullet(
                 bulletTemplate,
                 muzzlePoint.position.x,
@@ -112,17 +109,8 @@ public class RangedWeaponSystem extends IteratingSystem {
     configureHoming(bulletEntity, targetPosition, bulletTemplate.speed);
   }
 
-  private float getVisualAngle(Entity owner, float fallbackAngle) {
-    MovementDirectionStateComponent movement = movementMapper.get(owner);
-    return movement != null ? movement.faceAngle : fallbackAngle;
-  }
-
   private void configureHoming(Entity bulletEntity, PositionComponent targetPosition, float speed) {
     BulletComponent bullet = bulletEntity.getComponent(BulletComponent.class);
-    if (bullet == null) {
-      return;
-    }
-
     bullet.isHoming = true;
     bullet.targetX = targetPosition.x;
     bullet.targetY = targetPosition.y;
@@ -133,14 +121,5 @@ public class RangedWeaponSystem extends IteratingSystem {
   private void calculateVelocity(
       MuzzlePointComponent muzzlePoint, PositionComponent targetPosition, float speed) {
     velocity.set(targetPosition.x, targetPosition.y).sub(muzzlePoint.position).nor().scl(speed);
-  }
-
-  private float getDamage(Entity owner) {
-    DamageComponent damageComponent = damageMapper.get(owner);
-    if (damageComponent != null) {
-      return damageComponent.damage;
-    }
-    CompanionComponent companion = companionMapper.get(owner);
-    return companion != null ? companion.damage : DamageComponent.DEFAULT_DAMAGE;
   }
 }

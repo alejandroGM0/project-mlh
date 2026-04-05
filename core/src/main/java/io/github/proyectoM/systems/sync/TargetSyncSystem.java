@@ -6,7 +6,7 @@ import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
 import io.github.proyectoM.components.entity.InventoryComponent;
 import io.github.proyectoM.components.entity.combat.TargetComponent;
-import io.github.proyectoM.components.entity.weapon.WeaponComponent;
+import io.github.proyectoM.components.entity.weapon.WeaponStateComponent;
 
 /**
  * Syncs weapons[0].targetEntity to character.targetEntity. Processes all characters (companions and
@@ -18,8 +18,8 @@ public class TargetSyncSystem extends IteratingSystem {
       ComponentMapper.getFor(InventoryComponent.class);
   private final ComponentMapper<TargetComponent> targetMapper =
       ComponentMapper.getFor(TargetComponent.class);
-  private final ComponentMapper<WeaponComponent> weaponMapper =
-      ComponentMapper.getFor(WeaponComponent.class);
+  private final ComponentMapper<WeaponStateComponent> weaponStateMapper =
+      ComponentMapper.getFor(WeaponStateComponent.class);
 
   public TargetSyncSystem() {
     super(Family.all(InventoryComponent.class, TargetComponent.class).get());
@@ -32,10 +32,10 @@ public class TargetSyncSystem extends IteratingSystem {
 
     if (inventory.weapons.size > 0) {
       Entity primaryWeapon = inventory.weapons.first();
-      WeaponComponent weaponComp = weaponMapper.get(primaryWeapon);
+      WeaponStateComponent weaponState = weaponStateMapper.get(primaryWeapon);
 
-      if (weaponComp != null) {
-        target.targetEntity = weaponComp.targetEntity;
+      if (weaponState != null) {
+        target.targetEntity = weaponState.targetEntity;
       }
     } else {
       target.targetEntity = null;

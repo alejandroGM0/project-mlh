@@ -1,10 +1,10 @@
 package io.github.proyectoM.components.entity.visual;
 
 import com.badlogic.ashley.core.Component;
-import com.badlogic.gdx.utils.Pool;
+import com.badlogic.gdx.utils.Pool.Poolable;
 
 /** Adds a flickering or pulsing distance effect to a light. */
-public class FlickerLightComponent implements Component, Pool.Poolable {
+public class FlickerLightComponent implements Component, Poolable {
   public static final float DEFAULT_BASE_DISTANCE = 0f;
   public static final float DEFAULT_AMOUNT = 0.15f;
   public static final float DEFAULT_SPEED = 5f;

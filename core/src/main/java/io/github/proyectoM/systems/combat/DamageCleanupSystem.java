@@ -1,6 +1,7 @@
 package io.github.proyectoM.systems.combat;
 
 import com.badlogic.ashley.core.ComponentMapper;
+import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
@@ -25,8 +26,23 @@ public class DamageCleanupSystem extends IteratingSystem {
 
   private Entity globalStateEntity;
 
+  private ImmutableArray<Entity> globalStateEntities;
+  private ImmutableArray<Entity> aliveCompanions;
+
   public DamageCleanupSystem() {
     super(Family.all(HealthComponent.class).exclude(DeadComponent.class).get());
+  }
+
+  @Override
+  public void addedToEngine(Engine engine) {
+    super.addedToEngine(engine);
+    globalStateEntities =
+        engine.getEntitiesFor(Family.all(GameStateComponent.class, ScoreComponent.class).get());
+    aliveCompanions =
+        engine.getEntitiesFor(
+            Family.all(CompanionComponent.class, HealthComponent.class)
+                .exclude(DeadComponent.class)
+                .get());
   }
 
   @Override
@@ -46,14 +62,11 @@ public class DamageCleanupSystem extends IteratingSystem {
   }
 
   private Entity findGlobalStateEntity() {
-    ImmutableArray<Entity> entities =
-        getEngine()
-            .getEntitiesFor(Family.all(GameStateComponent.class, ScoreComponent.class).get());
-    if (entities.size() == 0) {
+    if (globalStateEntities.size() == 0) {
       return null;
     }
 
-    return entities.first();
+    return globalStateEntities.first();
   }
 
   private void markEntityAsDead(Entity entity) {
@@ -78,15 +91,7 @@ public class DamageCleanupSystem extends IteratingSystem {
       return;
     }
 
-    int aliveCompanions =
-        getEngine()
-            .getEntitiesFor(
-                Family.all(CompanionComponent.class, HealthComponent.class)
-                    .exclude(DeadComponent.class)
-                    .get())
-            .size();
-
-    if (aliveCompanions <= 1) {
+    if (aliveCompanions.size() <= 1) {
       GameStateComponent gameState = gameStateMapper.get(globalStateEntity);
       gameState.currentState = GameStateComponent.State.GAME_OVER;
     }

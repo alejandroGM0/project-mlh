@@ -39,9 +39,14 @@ public class GameSessionManager {
     screenManager.showNewGameScreen();
   }
 
-  /** Starts a new game session with a specific map and game mode. */
+  /**
+   * Starts a new game session with a specific map and game mode.
+   *
+   * @param mapId the registry identifier of the map to load
+   * @param gameMode the selected game mode
+   */
   public void startNewGame(String mapId, GameMode gameMode) {
-    screenManager.showNewGameScreen();
+    screenManager.showNewGameScreen(mapId, gameMode);
   }
 
   /** Transitions to the game-over screen with the final run statistics. */

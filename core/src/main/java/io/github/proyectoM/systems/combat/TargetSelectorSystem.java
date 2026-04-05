@@ -1,6 +1,5 @@
 package io.github.proyectoM.systems.combat;
 
-import com.badlogic.ashley.core.Component;
 import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
@@ -12,13 +11,25 @@ import io.github.proyectoM.components.entity.ParentComponent;
 import io.github.proyectoM.components.entity.combat.DeadComponent;
 import io.github.proyectoM.components.entity.movement.PositionComponent;
 import io.github.proyectoM.components.entity.weapon.WeaponComponent;
+import io.github.proyectoM.components.entity.weapon.WeaponStateComponent;
 
 /** Periodically assigns the nearest valid target to each weapon entity. */
 public class TargetSelectorSystem extends IteratingSystem {
   private static final float TARGET_SEARCH_INTERVAL = 0.2f;
 
+  private static final Family COMPANION_TARGET_FAMILY =
+      Family.all(EnemyComponent.class, PositionComponent.class)
+          .exclude(DeadComponent.class)
+          .get();
+  private static final Family ENEMY_TARGET_FAMILY =
+      Family.all(CompanionComponent.class, PositionComponent.class)
+          .exclude(DeadComponent.class)
+          .get();
+
   private final ComponentMapper<WeaponComponent> weaponMapper =
       ComponentMapper.getFor(WeaponComponent.class);
+  private final ComponentMapper<WeaponStateComponent> weaponStateMapper =
+      ComponentMapper.getFor(WeaponStateComponent.class);
   private final ComponentMapper<PositionComponent> positionMapper =
       ComponentMapper.getFor(PositionComponent.class);
   private final ComponentMapper<ParentComponent> parentMapper =
@@ -46,23 +57,24 @@ public class TargetSelectorSystem extends IteratingSystem {
   @Override
   protected void processEntity(Entity weaponEntity, float deltaTime) {
     ParentComponent parentComponent = parentMapper.get(weaponEntity);
-    if (parentComponent.parent == null) {
-      return;
-    }
-
     WeaponComponent weapon = weaponMapper.get(weaponEntity);
+    WeaponStateComponent weaponState = weaponStateMapper.get(weaponEntity);
     PositionComponent weaponPosition = positionMapper.get(weaponEntity);
     CompanionComponent ownerCompanion = companionMapper.get(parentComponent.parent);
 
     Family targetFamily = getTargetFamily(ownerCompanion);
     float maxRange = getMaxTargetRange(weapon, ownerCompanion);
-    weapon.targetEntity = findNearestTarget(weaponPosition, maxRange, targetFamily);
+    weaponState.targetEntity = findNearestTarget(weaponPosition, maxRange, targetFamily);
   }
 
+  /**
+   * Returns the family of entities to search as targets based on the weapon owner type.
+   *
+   * @param ownerCompanion companion component of the weapon owner, or null for enemy-owned weapons
+   * @return the family of valid target candidates
+   */
   private Family getTargetFamily(CompanionComponent ownerCompanion) {
-    Class<? extends Component> targetType =
-        ownerCompanion != null ? EnemyComponent.class : CompanionComponent.class;
-    return Family.all(targetType, PositionComponent.class).exclude(DeadComponent.class).get();
+    return ownerCompanion != null ? COMPANION_TARGET_FAMILY : ENEMY_TARGET_FAMILY;
   }
 
   private float getMaxTargetRange(WeaponComponent weapon, CompanionComponent ownerCompanion) {

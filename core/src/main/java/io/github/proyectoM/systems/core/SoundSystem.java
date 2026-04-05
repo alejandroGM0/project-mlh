@@ -29,7 +29,7 @@ public class SoundSystem extends EntitySystem {
   private static final String STEP_SOUND_TOKEN = "step";
   private static final String FOOTSTEP_SOUND_TOKEN = "footstep";
 
-  private final AudioManager audioManager = AudioManager.getInstance();
+  private final AudioManager audioManager;
   private final ComponentMapper<SoundEmitterComponent> soundMapper =
       ComponentMapper.getFor(SoundEmitterComponent.class);
   private final ComponentMapper<PositionComponent> positionMapper =
@@ -44,6 +44,10 @@ public class SoundSystem extends EntitySystem {
   private ImmutableArray<Entity> soundEmitters;
   private ImmutableArray<Entity> listeners;
   private boolean hasActiveListener;
+
+  public SoundSystem(AudioManager audioManager) {
+    this.audioManager = audioManager;
+  }
 
   @Override
   public void addedToEngine(Engine engine) {

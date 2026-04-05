@@ -32,7 +32,9 @@ public class MuzzlePointUpdateSystem extends IteratingSystem {
   private final ComponentMapper<MuzzlePointComponent> muzzleMapper =
       ComponentMapper.getFor(MuzzlePointComponent.class);
 
-  public MuzzlePointUpdateSystem() {
+  private final WeaponRegistry weaponRegistry;
+
+  public MuzzlePointUpdateSystem(WeaponRegistry weaponRegistry) {
     super(
         Family.all(
                 AnimationComponent.class,
@@ -40,6 +42,7 @@ public class MuzzlePointUpdateSystem extends IteratingSystem {
                 InventoryComponent.class,
                 MuzzlePointComponent.class)
             .get());
+    this.weaponRegistry = weaponRegistry;
   }
 
   @Override
@@ -67,7 +70,7 @@ public class MuzzlePointUpdateSystem extends IteratingSystem {
       return;
     }
 
-    WeaponTemplate template = WeaponRegistry.getInstance().getTemplate(weapon.id);
+    WeaponTemplate template = weaponRegistry.getTemplate(weapon.id);
     if (template == null) {
       return;
     }

@@ -13,6 +13,7 @@ import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import io.github.proyectoM.Main;
+import io.github.proyectoM.audio.AudioManager;
 import io.github.proyectoM.debug.DebugSystem;
 import io.github.proyectoM.debug.RenderDebugSettings;
 import io.github.proyectoM.factories.BulletFactory;
@@ -21,9 +22,15 @@ import io.github.proyectoM.factories.EnemyFactory;
 import io.github.proyectoM.factories.GroupControllerFactory;
 import io.github.proyectoM.physics.PhysicsConstants;
 import io.github.proyectoM.physics.PhysicsWorldProvider;
+import io.github.proyectoM.registry.BulletRegistry;
+import io.github.proyectoM.registry.CompanionRegistry;
+import io.github.proyectoM.registry.EnemyRegistry;
+import io.github.proyectoM.registry.MapRegistry;
+import io.github.proyectoM.registry.WeaponRegistry;
 import io.github.proyectoM.settings.GameSettings;
 import io.github.proyectoM.systems.animation.ActionStateSystem;
 import io.github.proyectoM.systems.animation.AnimationSelectionSystem;
+import io.github.proyectoM.templates.MapTemplate;
 import io.github.proyectoM.systems.animation.AnimationSystem;
 import io.github.proyectoM.systems.animation.MuzzlePointUpdateSystem;
 import io.github.proyectoM.systems.combat.BulletHomingSystem;
@@ -90,6 +97,8 @@ public class GameScreen implements Screen {
   private final Stage uiStage;
   private final OrthographicCamera camera;
   private final CameraSystem cameraSystem;
+  private final String mapId;
+  private final GameMode gameMode;
 
   private boolean initialized = false;
 
@@ -109,15 +118,28 @@ public class GameScreen implements Screen {
   private InputSystem playerInputSystem;
   private CompanionFactory companionFactory;
   private EnemyFactory enemyFactory;
+  private BulletFactory bulletFactory;
 
   public GameScreen(Main game) {
+    this(game, null, null);
+  }
+
+  /**
+   * Creates a gameplay screen that loads the specified map and game mode.
+   *
+   * @param game the main game instance
+   * @param mapId registry identifier of the map to load, or null for the default map
+   * @param gameMode the selected game mode, or null for default
+   */
+  public GameScreen(Main game, String mapId, GameMode gameMode) {
     this.game = game;
     this.engine = game.getEngine();
     this.batch = game.getBatch();
     this.uiStage = game.getGameStage();
     this.camera = new OrthographicCamera(CAMERA_VIEWPORT_WIDTH, CAMERA_VIEWPORT_HEIGHT);
-    this.camera.zoom = CAMERA_ZOOM_DEBUG;
     this.cameraSystem = new CameraSystem(camera);
+    this.mapId = mapId;
+    this.gameMode = gameMode;
   }
 
   @Override
@@ -157,14 +179,20 @@ public class GameScreen implements Screen {
   }
 
   private void initializeFactories() {
-    BulletFactory.initialize(engine);
-    this.companionFactory = new CompanionFactory(engine, world);
-    this.enemyFactory = new EnemyFactory(engine, world);
+    WeaponRegistry weaponRegistry = WeaponRegistry.getInstance();
+    this.bulletFactory = new BulletFactory(engine);
+    this.companionFactory =
+        new CompanionFactory(engine, world, weaponRegistry, CompanionRegistry.getInstance());
+    this.enemyFactory = new EnemyFactory(engine, world, weaponRegistry);
   }
 
   private void initializeCoordinators() {
     this.mapCoordinator = new GameScreenMapCoordinator(world, engine, rayHandler);
-    this.stateCoordinator = new GameScreenStateCoordinator(engine);
+    this.stateCoordinator =
+        new GameScreenStateCoordinator(
+            engine,
+            () -> ScreenManager.getInstance().showScreen(ScreenManager.ScreenType.PAUSE),
+            stats -> GameSessionManager.getInstance().showGameOver(stats));
     this.debugCoordinator =
         new GameScreenDebugCoordinator(
             engine,
@@ -173,7 +201,8 @@ public class GameScreen implements Screen {
             companionFactory,
             enemyFactory,
             mapCoordinator,
-            renderDebugSettings);
+            renderDebugSettings,
+            DebugSystem.getInstance());
     this.renderCoordinator =
         new GameScreenRenderCoordinator(
             batch,
@@ -196,7 +225,7 @@ public class GameScreen implements Screen {
 
   private void initializeGameplayState() {
     stateCoordinator.initializeGlobalStateEntity();
-    mapCoordinator.initialize();
+    mapCoordinator.initialize(mapId);
   }
 
   private void initializeGameEntities() {
@@ -236,9 +265,10 @@ public class GameScreen implements Screen {
   }
 
   private void addCoreSystems() {
-    addSystemWithPriority(new SoundSystem(), PRIORITY_CORE);
+    addSystemWithPriority(new SoundSystem(AudioManager.getInstance()), PRIORITY_CORE);
     addSystemWithPriority(waveSystem, PRIORITY_CORE + 1);
-    addSystemWithPriority(new EnemySpawnerSystem(engine, world), PRIORITY_CORE + 2);
+    addSystemWithPriority(
+        new EnemySpawnerSystem(enemyFactory, EnemyRegistry.getInstance()), PRIORITY_CORE + 2);
     addSystemWithPriority(cameraSystem, PRIORITY_CORE + 3);
     addSystemWithPriority(playerInputSystem, PRIORITY_INPUT);
   }
@@ -256,12 +286,13 @@ public class GameScreen implements Screen {
   }
 
   private void addCombatAndAnimationSystems() {
-    addSystemWithPriority(new RangedWeaponSystem(world), PRIORITY_COMBAT);
+    addSystemWithPriority(
+        new RangedWeaponSystem(world, bulletFactory, BulletRegistry.getInstance()), PRIORITY_COMBAT);
     addSystemWithPriority(new MeleeWeaponSystem(), PRIORITY_COMBAT + 1);
     addSystemWithPriority(new ActionStateSystem(), PRIORITY_ANIMATION);
     addSystemWithPriority(new AnimationSelectionSystem(), PRIORITY_ANIMATION + 1);
     addSystemWithPriority(new AnimationSystem(), PRIORITY_ANIMATION + 2);
-    addSystemWithPriority(new MuzzlePointUpdateSystem(), PRIORITY_ANIMATION + 3);
+    addSystemWithPriority(new MuzzlePointUpdateSystem(WeaponRegistry.getInstance()), PRIORITY_ANIMATION + 3);
     addSystemWithPriority(new MuzzleFlashSystem(), PRIORITY_ANIMATION + 4);
     addSystemWithPriority(new BulletHomingSystem(), PRIORITY_COMBAT + 2);
     addSystemWithPriority(new BulletLifeSystem(), PRIORITY_COMBAT + 3);
@@ -316,12 +347,15 @@ public class GameScreen implements Screen {
     debugCoordinator.resize(width, height);
   }
 
+  /** Not used in the game screen. */
   @Override
   public void pause() {}
 
+  /** Not used in the game screen. */
   @Override
   public void resume() {}
 
+  /** Not used in the game screen. */
   @Override
   public void hide() {}
 
@@ -338,6 +372,10 @@ public class GameScreen implements Screen {
     engine.removeAllSystems();
     engine.removeAllEntities();
 
+    if (bulletFactory != null) {
+      bulletFactory.dispose();
+      bulletFactory = null;
+    }
     if (rayHandler != null) {
       rayHandler.dispose();
       rayHandler = null;

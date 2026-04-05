@@ -11,6 +11,7 @@ import io.github.proyectoM.components.entity.movement.PositionComponent;
 import io.github.proyectoM.components.entity.visual.LightComponent;
 import io.github.proyectoM.components.entity.weapon.MuzzleFlashComponent;
 import io.github.proyectoM.components.entity.weapon.WeaponComponent;
+import io.github.proyectoM.components.entity.weapon.WeaponStateComponent;
 import io.github.proyectoM.components.entity.weapon.types.MeleeWeaponComponent;
 import io.github.proyectoM.components.entity.weapon.types.RangedWeaponComponent;
 import io.github.proyectoM.components.visual.VisualAssetComponent;
@@ -34,11 +35,33 @@ public final class WeaponFactory {
 
   private WeaponFactory() {}
 
+  /**
+   * Creates a weapon entity for the given owner using the specified weapon template.
+   *
+   * @param engine the ECS engine
+   * @param weaponId the weapon template identifier
+   * @param owner the entity that owns this weapon
+   * @return the created weapon entity
+   */
   public static Entity createWeapon(Engine engine, String weaponId, Entity owner) {
+    return createWeapon(engine, weaponId, owner, WeaponRegistry.getInstance());
+  }
+
+  /**
+   * Creates a weapon entity using an explicitly provided registry.
+   *
+   * @param engine the ECS engine
+   * @param weaponId the weapon template identifier
+   * @param owner the entity that owns this weapon
+   * @param weaponRegistry the registry to look up the template from
+   * @return the created weapon entity
+   */
+  public static Entity createWeapon(
+      Engine engine, String weaponId, Entity owner, WeaponRegistry weaponRegistry) {
     Objects.requireNonNull(engine, "engine");
     Objects.requireNonNull(owner, "owner");
 
-    WeaponTemplate template = getRequiredTemplate(weaponId);
+    WeaponTemplate template = weaponRegistry.getRequired(weaponId);
     Entity weapon = engine.createEntity();
 
     addCommonWeaponComponents(engine, weapon, template, owner);
@@ -57,14 +80,6 @@ public final class WeaponFactory {
     return weapon;
   }
 
-  private static WeaponTemplate getRequiredTemplate(String weaponId) {
-    WeaponTemplate template = WeaponRegistry.getInstance().getTemplate(weaponId);
-    if (template == null) {
-      throw new IllegalArgumentException("Unknown weapon template: " + weaponId);
-    }
-    return template;
-  }
-
   private static void addCommonWeaponComponents(
       Engine engine, Entity weapon, WeaponTemplate template, Entity owner) {
     WeaponComponent wc = engine.createComponent(WeaponComponent.class);
@@ -77,6 +92,10 @@ public final class WeaponFactory {
     wc.sound = template.sound;
     wc.damageFrame = template.damageFrame;
     weapon.add(wc);
+
+    WeaponStateComponent state = engine.createComponent(WeaponStateComponent.class);
+    weapon.add(state);
+
     weapon.add(createWeaponActionState(engine, template.attackVariant));
     PositionComponent pos = engine.createComponent(PositionComponent.class);
     weapon.add(pos);
@@ -155,7 +174,7 @@ public final class WeaponFactory {
     flashEntity.add(createFlashAnimation(engine, template));
     flashEntity.add(createMuzzleLight(engine));
 
-    weapon.getComponent(WeaponComponent.class).flashEntity = flashEntity;
+    weapon.getComponent(WeaponStateComponent.class).flashEntity = flashEntity;
     return flashEntity;
   }
 

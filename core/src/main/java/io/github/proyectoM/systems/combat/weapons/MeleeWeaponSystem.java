@@ -15,6 +15,7 @@ import io.github.proyectoM.components.entity.combat.PendingDamageComponent;
 import io.github.proyectoM.components.entity.movement.PhysicsComponent;
 import io.github.proyectoM.components.entity.movement.PositionComponent;
 import io.github.proyectoM.components.entity.weapon.WeaponComponent;
+import io.github.proyectoM.components.entity.weapon.WeaponStateComponent;
 import io.github.proyectoM.components.entity.weapon.types.MeleeWeaponComponent;
 import io.github.proyectoM.physics.PhysicsConstants;
 
@@ -22,6 +23,8 @@ import io.github.proyectoM.physics.PhysicsConstants;
 public class MeleeWeaponSystem extends IteratingSystem {
   private final ComponentMapper<WeaponComponent> weaponMapper =
       ComponentMapper.getFor(WeaponComponent.class);
+  private final ComponentMapper<WeaponStateComponent> weaponStateMapper =
+      ComponentMapper.getFor(WeaponStateComponent.class);
   private final ComponentMapper<ParentComponent> parentMapper =
       ComponentMapper.getFor(ParentComponent.class);
   private final ComponentMapper<PositionComponent> positionMapper =
@@ -43,31 +46,30 @@ public class MeleeWeaponSystem extends IteratingSystem {
   @Override
   protected void processEntity(Entity weaponEntity, float deltaTime) {
     WeaponComponent weapon = weaponMapper.get(weaponEntity);
+    WeaponStateComponent weaponState = weaponStateMapper.get(weaponEntity);
     Entity owner = parentMapper.get(weaponEntity).parent;
-    if (owner == null) {
-      return;
-    }
 
-    if (!canAttackTarget(owner, weapon)) {
-      resetAttackState(owner, weapon);
+    if (!canAttackTarget(owner, weapon, weaponState)) {
+      resetAttackState(owner, weaponState);
       return;
     }
 
     if (!attackingMapper.has(owner)) {
-      startAttack(owner, weapon);
+      startAttack(owner, weapon, weaponState);
       return;
     }
 
-    processAnimationEvents(owner, weapon);
+    processAnimationEvents(owner, weapon, weaponState);
   }
 
-  private boolean canAttackTarget(Entity owner, WeaponComponent weapon) {
-    if (weapon.targetEntity == null) {
+  private boolean canAttackTarget(Entity owner, WeaponComponent weapon, WeaponStateComponent weaponState) {
+    if (weaponState.targetEntity == null) {
       return false;
     }
 
     PositionComponent ownerPosition = positionMapper.get(owner);
-    PositionComponent targetPosition = positionMapper.get(weapon.targetEntity);
+    PositionComponent targetPosition = positionMapper.get(weaponState.targetEntity);
+
     if (ownerPosition == null || targetPosition == null) {
       return false;
     }
@@ -76,7 +78,7 @@ public class MeleeWeaponSystem extends IteratingSystem {
     float dy = ownerPosition.y - targetPosition.y;
     float centerToCenter = (float) Math.hypot(dx, dy);
     float ownerRadius = getBodyRadiusPixels(physicsMapper.get(owner));
-    float targetRadius = getBodyRadiusPixels(physicsMapper.get(weapon.targetEntity));
+    float targetRadius = getBodyRadiusPixels(physicsMapper.get(weaponState.targetEntity));
     float edgeToEdge = Math.max(0f, centerToCenter - ownerRadius - targetRadius);
     return edgeToEdge <= weapon.attackRange;
   }
@@ -93,9 +95,9 @@ public class MeleeWeaponSystem extends IteratingSystem {
     return 0f;
   }
 
-  private void startAttack(Entity owner, WeaponComponent weapon) {
-    weapon.isAttacking = true;
-    weapon.hasDamagedThisAttack = false;
+  private void startAttack(Entity owner, WeaponComponent weapon, WeaponStateComponent weaponState) {
+    weaponState.isAttacking = true;
+    weaponState.hasDamagedThisAttack = false;
     owner.add(getEngine().createComponent(AttackingComponent.class));
 
     AnimEventComponent events = getOrCreateEvents(owner);
@@ -103,30 +105,29 @@ public class MeleeWeaponSystem extends IteratingSystem {
     events.defineEvent(AnimEventType.HIT_FRAME, weapon.damageFrame);
   }
 
-  private void processAnimationEvents(Entity owner, WeaponComponent weapon) {
+  private void processAnimationEvents(Entity owner, WeaponComponent weapon, WeaponStateComponent weaponState) {
     AnimEventComponent events = eventMapper.get(owner);
     if (events == null) {
       return;
     }
 
-    if (events.hasEvent(AnimEventType.HIT_FRAME) && !weapon.hasDamagedThisAttack) {
-      DamageComponent ownerDamage = damageMapper.get(owner);
-      float appliedDamage = ownerDamage != null ? ownerDamage.damage : weapon.damage;
+    if (events.hasEvent(AnimEventType.HIT_FRAME) && !weaponState.hasDamagedThisAttack) {
+      float appliedDamage = damageMapper.get(owner).damage;
       PendingDamageComponent pending = getEngine().createComponent(PendingDamageComponent.class);
       pending.amount = appliedDamage;
-      weapon.targetEntity.add(pending);
-      weapon.hasDamagedThisAttack = true;
+      weaponState.targetEntity.add(pending);
+      weaponState.hasDamagedThisAttack = true;
     }
 
     if (events.hasEvent(AnimEventType.END)) {
-      resetAttackState(owner, weapon);
+      resetAttackState(owner, weaponState);
       events.eventFrames.clear();
     }
   }
 
-  private void resetAttackState(Entity owner, WeaponComponent weapon) {
-    weapon.isAttacking = false;
-    weapon.hasDamagedThisAttack = false;
+  private void resetAttackState(Entity owner, WeaponStateComponent weaponState) {
+    weaponState.isAttacking = false;
+    weaponState.hasDamagedThisAttack = false;
     if (attackingMapper.has(owner)) {
       owner.remove(AttackingComponent.class);
     }

@@ -21,6 +21,7 @@ import io.github.proyectoM.components.entity.movement.LookAtComponent;
 import io.github.proyectoM.components.entity.movement.PhysicsComponent;
 import io.github.proyectoM.components.entity.movement.PositionComponent;
 import io.github.proyectoM.components.entity.weapon.MuzzlePointComponent;
+import io.github.proyectoM.components.visual.VisualAssetComponent;
 import io.github.proyectoM.physics.PhysicsConstants;
 import io.github.proyectoM.registry.VisualAssetRegistry;
 import io.github.proyectoM.registry.WeaponRegistry;
@@ -31,6 +32,7 @@ import java.util.Objects;
 /** Shared helpers for creating character entities with combat, animation, and physics. */
 public abstract class AbstractCharacterFactory {
   protected static final int DEFAULT_IDLE_VARIANT = 0;
+  protected static final float CHARACTER_BODY_RADIUS_METERS = 1.25f;
 
   private static final float BODY_DENSITY = 1f;
   private static final float BODY_FRICTION = 0.2f;
@@ -41,10 +43,12 @@ public abstract class AbstractCharacterFactory {
 
   protected final Engine engine;
   protected final World world;
+  protected final WeaponRegistry weaponRegistry;
 
-  protected AbstractCharacterFactory(Engine engine, World world) {
-    this.engine = engine;
+  protected AbstractCharacterFactory(Engine engine, World world, WeaponRegistry weaponRegistry) {
+    this.engine = Objects.requireNonNull(engine, "engine");
     this.world = world;
+    this.weaponRegistry = Objects.requireNonNull(weaponRegistry, "weaponRegistry");
   }
 
   protected void addBaseStats(Entity entity, Vector2 positionMeters, int health, int damage) {
@@ -98,6 +102,28 @@ public abstract class AbstractCharacterFactory {
     entity.add(engine.createComponent(TargetComponent.class));
   }
 
+  /**
+   * Adds visual and animation components shared by all character types.
+   *
+   * @param entity the entity to configure
+   * @param atlasPath visual asset identifier for the character
+   * @param weaponId weapon template id used to resolve the attack animation variant
+   */
+  protected void addVisualAndAnimationComponents(
+      Entity entity, String atlasPath, String weaponId) {
+    entity.add(engine.createComponent(MovementDirectionStateComponent.class));
+
+    VisualAssetComponent visual = engine.createComponent(VisualAssetComponent.class);
+    visual.visualAssetId = atlasPath;
+    entity.add(visual);
+
+    int attackVariant = resolveAttackVariant(weaponId);
+    ActionStateComponent action = createIdleActionState(attackVariant);
+    entity.add(action);
+
+    addInitialIdleAnimation(entity, atlasPath);
+  }
+
   protected int resolveAttackVariant(String weaponId) {
     return getRequiredWeaponTemplate(weaponId).attackVariant;
   }
@@ -123,11 +149,7 @@ public abstract class AbstractCharacterFactory {
   }
 
   private WeaponTemplate getRequiredWeaponTemplate(String weaponId) {
-    WeaponTemplate weaponTemplate = WeaponRegistry.getInstance().getTemplate(weaponId);
-    if (weaponTemplate == null) {
-      throw new IllegalArgumentException("Unknown weapon template: " + weaponId);
-    }
-    return weaponTemplate;
+    return weaponRegistry.getRequired(weaponId);
   }
 
   private Body createCharacterBody(Vector2 positionMeters) {

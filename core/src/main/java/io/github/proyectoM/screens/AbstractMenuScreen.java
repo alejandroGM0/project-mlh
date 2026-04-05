@@ -32,6 +32,7 @@ public abstract class AbstractMenuScreen implements Screen {
   protected BitmapFont titleFont;
   protected LabelStyle titleStyle;
   protected Label titleLabel;
+  private int cachedFontScreenHeight;
 
   protected AbstractMenuScreen(Main game) {
     this.game = game;
@@ -109,12 +110,15 @@ public abstract class AbstractMenuScreen implements Screen {
     }
   }
 
+  /** Not used in menu screens. */
   @Override
   public void pause() {}
 
+  /** Not used in menu screens. */
   @Override
   public void resume() {}
 
+  /** Not used in menu screens. */
   @Override
   public void hide() {}
 
@@ -149,6 +153,10 @@ public abstract class AbstractMenuScreen implements Screen {
       float borderWidth,
       Color borderColor,
       boolean useMipMaps) {
+    if (titleFont != null && screenPixelHeight == cachedFontScreenHeight) {
+      return;
+    }
+    cachedFontScreenHeight = screenPixelHeight;
     disposeTitleFont();
     FreeTypeFontGenerator generator =
         new FreeTypeFontGenerator(Gdx.files.internal(TITLE_FONT_PATH));
@@ -183,6 +191,7 @@ public abstract class AbstractMenuScreen implements Screen {
     if (titleFont != null) {
       titleFont.dispose();
       titleFont = null;
+      cachedFontScreenHeight = 0;
     }
   }
 

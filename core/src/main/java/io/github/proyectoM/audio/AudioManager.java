@@ -14,10 +14,6 @@ import java.util.Map;
 public class AudioManager implements Disposable {
   private static final float DEFAULT_VOLUME = 1f;
   private static final float SILENT_VOLUME = 0f;
-  private static final String PISTOL_FIRE_SOUND_NAME = "pistol_fire";
-  private static final String PISTOL_FIRE_SOUND_PATH = "audio/sfx/weapons/pistol_fire.wav";
-  private static final String RIFLE_FIRE_SOUND_NAME = "rifle_fire";
-  private static final String RIFLE_FIRE_SOUND_PATH = "audio/sfx/weapons/rifle_fire.wav";
 
   private static AudioManager instance;
 
@@ -63,9 +59,23 @@ public class AudioManager implements Disposable {
     }
   }
 
-  public void loadAudioAssets() {
-    loadSound(PISTOL_FIRE_SOUND_NAME, PISTOL_FIRE_SOUND_PATH);
-    loadSound(RIFLE_FIRE_SOUND_NAME, RIFLE_FIRE_SOUND_PATH);
+  /**
+   * Registers a sound file for later playback. Duplicate names are silently ignored.
+   *
+   * @param name logical identifier used when calling playSound
+   * @param filePath internal asset path
+   */
+  public void loadSound(String name, String filePath) {
+    if (soundCache.containsKey(name)) {
+      return;
+    }
+
+    FileHandle soundFile = Gdx.files.internal(filePath);
+    if (!soundFile.exists()) {
+      return;
+    }
+
+    soundCache.put(name, Gdx.audio.newSound(soundFile));
   }
 
   public void playMusic(String musicName, boolean loop) {
@@ -136,15 +146,6 @@ public class AudioManager implements Disposable {
 
   private float calculateMusicVolume() {
     return calculateCategoryVolume(DEFAULT_VOLUME, SoundCategory.MUSIC);
-  }
-
-  private void loadSound(String name, String filePath) {
-    FileHandle soundFile = Gdx.files.internal(filePath);
-    if (!soundFile.exists()) {
-      return;
-    }
-
-    soundCache.put(name, Gdx.audio.newSound(soundFile));
   }
 
   private void disposeSounds() {

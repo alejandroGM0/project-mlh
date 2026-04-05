@@ -27,7 +27,7 @@ public class DamageSystem extends IteratingSystem {
     HealthComponent health = healthMapper.get(entity);
     PendingDamageComponent pendingDamage = pendingDamageMapper.get(entity);
 
-    int appliedDamage = (int) pendingDamage.amount;
+    int appliedDamage = Math.round(pendingDamage.amount);
     health.currentHealth -= appliedDamage;
     entity.remove(PendingDamageComponent.class);
   }

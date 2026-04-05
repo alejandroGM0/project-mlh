@@ -1,5 +1,6 @@
 package io.github.proyectoM.systems.physics;
 
+import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.physics.box2d.Contact;
@@ -20,6 +21,12 @@ import io.github.proyectoM.components.entity.weapon.BulletComponent;
  */
 public class GameContactListener implements ContactListener {
   private final Engine engine;
+  private final ComponentMapper<BulletComponent> bulletMapper =
+      ComponentMapper.getFor(BulletComponent.class);
+  private final ComponentMapper<EnemyComponent> enemyMapper =
+      ComponentMapper.getFor(EnemyComponent.class);
+  private final ComponentMapper<DamageComponent> damageMapper =
+      ComponentMapper.getFor(DamageComponent.class);
 
   public GameContactListener(Engine engine) {
     this.engine = engine;
@@ -90,7 +97,7 @@ public class GameContactListener implements ContactListener {
    * @return true if it has a BulletComponent, false otherwise.
    */
   private boolean isBullet(Entity entity) {
-    return entity.getComponent(BulletComponent.class) != null;
+    return bulletMapper.has(entity);
   }
 
   /**
@@ -100,7 +107,7 @@ public class GameContactListener implements ContactListener {
    * @return true if it has an EnemyComponent, false otherwise.
    */
   private boolean isZombie(Entity entity) {
-    return entity.getComponent(EnemyComponent.class) != null;
+    return enemyMapper.has(entity);
   }
 
   /**
@@ -110,10 +117,11 @@ public class GameContactListener implements ContactListener {
    * @param zombie The zombie entity.
    */
   private void markPendingDamage(Entity bullet, Entity zombie) {
-    DamageComponent damageComponent = bullet.getComponent(DamageComponent.class);
+    DamageComponent damageComponent = damageMapper.get(bullet);
     if (damageComponent != null) {
       PendingDamageComponent pending = engine.createComponent(PendingDamageComponent.class);
       pending.amount = damageComponent.damage;
+      pending.source = bullet;
       zombie.add(pending);
       bullet.add(engine.createComponent(PendingRemoveComponent.class));
     }

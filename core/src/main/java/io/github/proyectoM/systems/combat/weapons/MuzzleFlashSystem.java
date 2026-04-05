@@ -11,6 +11,7 @@ import io.github.proyectoM.components.entity.visual.LightComponent;
 import io.github.proyectoM.components.entity.weapon.MuzzleFlashComponent;
 import io.github.proyectoM.components.entity.weapon.MuzzlePointComponent;
 import io.github.proyectoM.components.entity.weapon.WeaponComponent;
+import io.github.proyectoM.components.entity.weapon.WeaponStateComponent;
 import io.github.proyectoM.physics.PhysicsConstants;
 
 /** Controls muzzle flash playback and attached light positioning. */
@@ -25,6 +26,8 @@ public class MuzzleFlashSystem extends IteratingSystem {
       ComponentMapper.getFor(AnimationComponent.class);
   private final ComponentMapper<WeaponComponent> weaponMapper =
       ComponentMapper.getFor(WeaponComponent.class);
+  private final ComponentMapper<WeaponStateComponent> weaponStateMapper =
+      ComponentMapper.getFor(WeaponStateComponent.class);
   private final ComponentMapper<LightComponent> lightMapper =
       ComponentMapper.getFor(LightComponent.class);
   private final ComponentMapper<ParentComponent> parentMapper =
@@ -41,16 +44,16 @@ public class MuzzleFlashSystem extends IteratingSystem {
   @Override
   protected void processEntity(Entity flashEntity, float deltaTime) {
     MuzzleFlashComponent flash = flashMapper.get(flashEntity);
-    WeaponComponent weapon = weaponMapper.get(flash.weaponEntity);
+    WeaponStateComponent weaponState = weaponStateMapper.get(flash.weaponEntity);
     AnimationComponent animation = animationMapper.get(flashEntity);
     LightComponent light = lightMapper.get(flashEntity);
 
-    if (weapon == null || light == null) {
+    if (weaponState == null || light == null) {
       return;
     }
 
-    if (weapon.flashTimer > 0f) {
-      updateActiveFlash(flash.weaponEntity, weapon, animation, light, deltaTime);
+    if (weaponState.flashTimer > 0f) {
+      updateActiveFlash(flash.weaponEntity, weaponState, animation, light, deltaTime);
       return;
     }
 
@@ -60,11 +63,11 @@ public class MuzzleFlashSystem extends IteratingSystem {
 
   private void updateActiveFlash(
       Entity weaponEntity,
-      WeaponComponent weapon,
+      WeaponStateComponent weaponState,
       AnimationComponent animation,
       LightComponent light,
       float deltaTime) {
-    weapon.flashTimer -= deltaTime;
+    weaponState.flashTimer -= deltaTime;
     animation.stateTime =
         animation.stateTime == 0f ? FRAME_DURATION : animation.stateTime + deltaTime;
     light.active = true;

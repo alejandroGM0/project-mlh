@@ -44,6 +44,18 @@ public class SquadMovementSystem extends EntitySystem {
 
   private static final float DISTANCE_THRESHOLD = 5.0f;
 
+  private ImmutableArray<Entity> controllerEntities;
+  private ImmutableArray<Entity> companionEntities;
+
+  @Override
+  public void addedToEngine(Engine engine) {
+    controllerEntities =
+        engine.getEntitiesFor(Family.all(GroupControllerComponent.class).get());
+    companionEntities =
+        engine.getEntitiesFor(
+            Family.all(CompanionComponent.class, SquadMovementComponent.class).get());
+  }
+
   /**
    * Invoked when the system is removed from the Engine.
    *
@@ -61,10 +73,8 @@ public class SquadMovementSystem extends EntitySystem {
    */
   @Override
   public void update(float deltaTime) {
-    ImmutableArray<Entity> controllers =
-        getEngine().getEntitiesFor(Family.all(GroupControllerComponent.class).get());
-    if (controllers.size() > 0) {
-      squadControlEntity = controllers.first();
+    if (controllerEntities.size() > 0) {
+      squadControlEntity = controllerEntities.first();
       controller = controllerMapper.get(squadControlEntity);
     } else {
       squadControlEntity = null;
@@ -89,12 +99,9 @@ public class SquadMovementSystem extends EntitySystem {
    * added, it flags that the formation needs to be recalculated.
    */
   private void discoverNewCompanions() {
-    ImmutableArray<Entity> allCompanions =
-        getEngine()
-            .getEntitiesFor(
-                Family.all(CompanionComponent.class, SquadMovementComponent.class).get());
-    if (allCompanions.size() > groupMembers.size()) {
-      for (Entity companion : allCompanions) {
+    if (companionEntities.size() > groupMembers.size()) {
+      for (int i = 0; i < companionEntities.size(); i++) {
+        Entity companion = companionEntities.get(i);
         if (!groupMembers.contains(companion)) {
           groupMembers.add(companion);
           formationNeedsRecalculation = true;

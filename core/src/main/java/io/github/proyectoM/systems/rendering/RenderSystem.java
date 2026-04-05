@@ -55,11 +55,20 @@ public class RenderSystem extends EntitySystem {
     batch.end();
   }
 
+  /**
+   * Compares two entities for rendering order. Dead entities (corpses) always render before alive
+   * entities so they appear behind living characters. Within the same alive/dead group, entities
+   * are sorted by isometric depth so that farther entities render first (behind).
+   *
+   * @param firstEntity the first entity to compare
+   * @param secondEntity the second entity to compare
+   * @return negative if firstEntity should render before secondEntity, positive otherwise
+   */
   private int compareByDepth(Entity firstEntity, Entity secondEntity) {
     boolean firstEntityDead = deadMapper.has(firstEntity);
     boolean secondEntityDead = deadMapper.has(secondEntity);
     if (firstEntityDead != secondEntityDead) {
-      return firstEntityDead ? 1 : -1;
+      return firstEntityDead ? -1 : 1;
     }
 
     PositionComponent firstPosition = positionMapper.get(firstEntity);

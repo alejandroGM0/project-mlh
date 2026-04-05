@@ -6,6 +6,7 @@ import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
 import io.github.proyectoM.components.entity.animation.AnimationComponent;
 import io.github.proyectoM.components.entity.combat.DeadComponent;
+import io.github.proyectoM.components.entity.movement.PhysicsComponent;
 import io.github.proyectoM.components.entity.visual.OpacityComponent;
 
 /** Fades out corpses and removes them after their death lifetime expires. */
@@ -21,6 +22,8 @@ public class DeathCleanupSystem extends IteratingSystem {
       ComponentMapper.getFor(AnimationComponent.class);
   private final ComponentMapper<OpacityComponent> opacityMapper =
       ComponentMapper.getFor(OpacityComponent.class);
+  private final ComponentMapper<PhysicsComponent> physicsMapper =
+      ComponentMapper.getFor(PhysicsComponent.class);
 
   public DeathCleanupSystem() {
     super(Family.all(DeadComponent.class, AnimationComponent.class, OpacityComponent.class).get());
@@ -36,7 +39,21 @@ public class DeathCleanupSystem extends IteratingSystem {
     updateAnimationFinished(dead, animation);
     updateFadeEffect(dead, opacity);
     if (dead.timeSinceDeath >= CORPSE_DURATION) {
+      destroyPhysicsBody(entity);
       getEngine().removeEntity(entity);
+    }
+  }
+
+  /**
+   * Destroys the Box2D body attached to the entity so it does not leak in the physics world.
+   *
+   * @param entity the entity whose body should be destroyed
+   */
+  private void destroyPhysicsBody(Entity entity) {
+    PhysicsComponent physics = physicsMapper.get(entity);
+    if (physics != null && physics.body != null) {
+      physics.body.getWorld().destroyBody(physics.body);
+      physics.body = null;
     }
   }
 

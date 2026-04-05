@@ -68,6 +68,6 @@ The combat systems that use them:
 ## License
 
 © 2026 Alejandro Gasca. All rights reserved.  
-This repository is publicly visible **solely for MLH Fellowship admissions review**.  
+This repository is publicly visible **solely for portfolio and admissions review**.  
 No license is granted for use, copying, modification, or distribution.  
 See [LICENSE](LICENSE) for full terms.

@@ -5,16 +5,24 @@ import com.badlogic.ashley.core.PooledEngine;
 import io.github.proyectoM.components.game.GameStateComponent;
 import io.github.proyectoM.components.game.ScoreComponent;
 import io.github.proyectoM.components.game.WaveComponent;
+import java.util.function.Consumer;
 
 /** Owns global gameplay state setup and screen transitions for {@link GameScreen}. */
 final class GameScreenStateCoordinator {
   private final PooledEngine engine;
+  private final Runnable pauseCallback;
+  private final Consumer<ScoreComponent> gameOverCallback;
 
   private Entity globalStateEntity;
   private boolean gameOverTriggered;
 
-  GameScreenStateCoordinator(PooledEngine engine) {
+  GameScreenStateCoordinator(
+      PooledEngine engine,
+      Runnable pauseCallback,
+      Consumer<ScoreComponent> gameOverCallback) {
     this.engine = engine;
+    this.pauseCallback = pauseCallback;
+    this.gameOverCallback = gameOverCallback;
   }
 
   void initializeGlobalStateEntity() {
@@ -36,7 +44,7 @@ final class GameScreenStateCoordinator {
   }
 
   void showPauseScreen() {
-    ScreenManager.getInstance().showScreen(ScreenManager.ScreenType.PAUSE);
+    pauseCallback.run();
   }
 
   /**
@@ -59,7 +67,7 @@ final class GameScreenStateCoordinator {
       scoreComponent.finalWave = waveComponent.currentWave;
     }
 
-    GameSessionManager.getInstance().showGameOver(scoreComponent);
+    gameOverCallback.accept(scoreComponent);
     return true;
   }
 }

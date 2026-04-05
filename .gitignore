@@ -20,7 +20,7 @@ build_*.txt
 *.html
 *.htm
 
-## Markdown (keep README):
+## Markdown (keep README only):
 *.md
 !README.md
 !**/README.md
@@ -42,6 +42,11 @@ assets/
 build_err.txt
 build_out.txt
 build_output.txt
+test_stderr.txt
+test_stdout.txt
+
+## Tools (dev-only):
+tools/animation-viewer/
 
 ## Gradle:
 .gradle/
@@ -101,6 +106,13 @@ www-test/
 
 ## TeaVM:
 # Not sure yet...
+
+## VS Code:
+.vscode/
+
+## AI agent state:
+.agent/
+.qodo/
 
 ## IntelliJ, Android Studio:
 .idea/

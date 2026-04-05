@@ -16,6 +16,7 @@ import io.github.proyectoM.components.entity.movement.LookAtComponent;
 import io.github.proyectoM.components.entity.weapon.MuzzleFlashComponent;
 import io.github.proyectoM.components.entity.weapon.MuzzlePointComponent;
 import io.github.proyectoM.components.entity.weapon.WeaponComponent;
+import io.github.proyectoM.components.entity.weapon.WeaponStateComponent;
 import io.github.proyectoM.effects.MuzzleSmokeParticle;
 import io.github.proyectoM.systems.combat.weapons.MuzzleFlashSystem;
 
@@ -46,6 +47,8 @@ public class MuzzleSmokeSystem extends IteratingSystem {
       ComponentMapper.getFor(MuzzleFlashComponent.class);
   private final ComponentMapper<WeaponComponent> weaponMapper =
       ComponentMapper.getFor(WeaponComponent.class);
+  private final ComponentMapper<WeaponStateComponent> weaponStateMapper =
+      ComponentMapper.getFor(WeaponStateComponent.class);
   private final ComponentMapper<MuzzlePointComponent> muzzleMapper =
       ComponentMapper.getFor(MuzzlePointComponent.class);
   private final ComponentMapper<ParentComponent> parentMapper =
@@ -86,13 +89,13 @@ public class MuzzleSmokeSystem extends IteratingSystem {
   }
 
   private boolean canSpawnParticles(Entity weaponEntity) {
-    WeaponComponent weapon = weaponMapper.get(weaponEntity);
-    if (weapon == null || isParticlePoolFull()) {
+    WeaponStateComponent weaponState = weaponStateMapper.get(weaponEntity);
+    if (weaponState == null || isParticlePoolFull()) {
       return false;
     }
 
     float flashDuration = MuzzleFlashSystem.FLASH_DURATION;
-    return weapon.flashTimer > 0f && weapon.flashTimer >= flashDuration - SPAWN_THRESHOLD_SECONDS;
+    return weaponState.flashTimer > 0f && weaponState.flashTimer >= flashDuration - SPAWN_THRESHOLD_SECONDS;
   }
 
   private boolean isParticlePoolFull() {

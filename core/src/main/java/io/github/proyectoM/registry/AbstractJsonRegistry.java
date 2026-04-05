@@ -5,6 +5,7 @@ import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.utils.JsonReader;
 import com.badlogic.gdx.utils.JsonValue;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -50,11 +51,49 @@ public abstract class AbstractJsonRegistry<T> {
     return templates.get(id);
   }
 
+  /**
+   * Returns the template for the given ID, throwing if not found.
+   *
+   * @param id the template identifier
+   * @return the template, never null
+   * @throws IllegalArgumentException if no template exists for the given ID
+   */
+  public T getRequired(String id) {
+    T template = getTemplate(id);
+    if (template == null) {
+      throw new IllegalArgumentException(
+          getClass().getSimpleName() + ": unknown template id '" + id + "'");
+    }
+    return template;
+  }
+
   /** Adds the given value to the set if it is non-null and non-empty. */
   protected void addIfPresent(Set<String> set, String value) {
     if (value != null && !value.isEmpty()) {
       set.add(value);
     }
+  }
+
+  /**
+   * Collects atlas paths from a single template into the given set. Override in subclasses to
+   * extract registry-specific atlas fields using {@link #addIfPresent}.
+   *
+   * @param template the template to extract paths from
+   * @param paths accumulator set for discovered atlas paths
+   */
+  protected void collectAtlasPaths(T template, Set<String> paths) {}
+
+  /**
+   * Returns all atlas paths across every loaded template.
+   *
+   * @return a mutable set of discovered atlas paths
+   */
+  public Set<String> getAllAtlasPaths() {
+    Set<String> paths = new HashSet<>();
+    for (T template : getAll().values()) {
+      collectAtlasPaths(template, paths);
+    }
+    return paths;
   }
 
   private void ensureLoaded() {
@@ -80,6 +119,10 @@ public abstract class AbstractJsonRegistry<T> {
 
     for (JsonValue node = nodes.child; node != null; node = node.next) {
       T template = readTemplate(node);
+      if (template == null) {
+        throw new IllegalStateException(
+            getClass().getSimpleName() + ": failed to parse node '" + node.name + "' in " + getJsonPath());
+      }
       validateTemplate(template);
       templates.put(getId(template), template);
     }

@@ -11,11 +11,19 @@ public final class PhysicsWorldProvider {
 
   private static World world;
 
+  static {
+    Box2D.init();
+  }
+
   private PhysicsWorldProvider() {}
 
+  /**
+   * Returns the shared Box2D world, creating it on first access.
+   *
+   * @return the shared world instance
+   */
   public static World getWorld() {
     if (world == null) {
-      Box2D.init();
       world = new World(ZERO_GRAVITY, ALLOW_SLEEPING_BODIES);
     }
     return world;

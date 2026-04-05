@@ -118,7 +118,7 @@ public class MainMenuScreen extends AbstractMenuScreen {
   }
 
   private void startGame() {
-    GameSessionManager.getInstance().startNewGame();
+    ScreenManager.getInstance().showScreen(ScreenManager.ScreenType.GAME_SETUP);
   }
 
   private void openOptions() {

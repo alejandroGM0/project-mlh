@@ -79,6 +79,7 @@ public class SettingsScreen extends AbstractMenuScreen {
     createUi();
   }
 
+  /** Not used in the settings screen. */
   @Override
   public void hide() {}
 

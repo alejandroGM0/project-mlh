@@ -24,6 +24,7 @@ final class GameScreenDebugCoordinator {
   private final EnemyFactory enemyFactory;
   private final GameScreenMapCoordinator mapCoordinator;
   private final RenderDebugSettings renderDebugSettings;
+  private final DebugSystem debugSystem;
 
   GameScreenDebugCoordinator(
       PooledEngine engine,
@@ -32,7 +33,8 @@ final class GameScreenDebugCoordinator {
       CompanionFactory companionFactory,
       EnemyFactory enemyFactory,
       GameScreenMapCoordinator mapCoordinator,
-      RenderDebugSettings renderDebugSettings) {
+      RenderDebugSettings renderDebugSettings,
+      DebugSystem debugSystem) {
     this.engine = engine;
     this.camera = camera;
     this.world = world;
@@ -40,23 +42,22 @@ final class GameScreenDebugCoordinator {
     this.enemyFactory = enemyFactory;
     this.mapCoordinator = mapCoordinator;
     this.renderDebugSettings = renderDebugSettings;
+    this.debugSystem = debugSystem;
   }
 
   void configurePanels() {
-    DebugSystem debugSystem = DebugSystem.getInstance();
     debugSystem.clearPanels();
     addCorePanels(debugSystem);
     addGameplayPanels(debugSystem);
   }
 
   void updateAndRender(float delta) {
-    DebugSystem debugSystem = DebugSystem.getInstance();
     debugSystem.update(delta);
     debugSystem.render();
   }
 
   void resize(int width, int height) {
-    DebugSystem.getInstance().resize(width, height);
+    debugSystem.resize(width, height);
   }
 
   private static final String CATEGORY_CORE = "Core";

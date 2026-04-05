@@ -1,14 +1,14 @@
-Copyright (c) 2026 Alejandro Gasca. All rights reserved.
+Copyright (c) 2026 Alejandro García Martínez. All rights reserved.
 
-VIEWING LICENSE — MLH FELLOWSHIP REVIEW ONLY
+VIEWING LICENSE — PORTFOLIO REVIEW ONLY
 
 This repository and all of its contents (source code, assets, configuration files,
-and documentation) are the exclusive intellectual property of Alejandro Gasca.
+and documentation) are the exclusive intellectual property of Alejandro García Martínez.
 
 PERMITTED:
-- Viewing and reading this code for the purpose of evaluating the MLH Fellowship application
-  submitted by Alejandro Gasca.
-- MLH admissions staff may share this code internally for review purposes.
+- Viewing and reading this code for the purpose of evaluating applications
+  submitted by Alejandro García Martínez.
+- Admissions staff may share this code internally for review purposes.
 
 NOT PERMITTED without express written permission from the author:
 - Copying, reproducing, or distributing any part of this code.
@@ -17,6 +17,6 @@ NOT PERMITTED without express written permission from the author:
 - Sub-licensing or re-publishing any part of this repository.
 - Any commercial or non-commercial use beyond the review described above.
 
-This code is NOT open source. It is made publicly visible solely to satisfy the
-MLH Fellowship application requirement that code samples be viewable on GitHub.
+This code is NOT open source. It is made publicly visible solely for portfolio
+and admissions review purposes.
 Public visibility does NOT grant any license to use, copy, or distribute this work.

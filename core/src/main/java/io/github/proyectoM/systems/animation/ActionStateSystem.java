@@ -11,7 +11,7 @@ import io.github.proyectoM.components.entity.animation.AnimationComponent;
 import io.github.proyectoM.components.entity.animation.MovementDirectionStateComponent;
 import io.github.proyectoM.components.entity.combat.AttackingComponent;
 import io.github.proyectoM.components.entity.combat.DeadComponent;
-import io.github.proyectoM.components.entity.weapon.WeaponComponent;
+import io.github.proyectoM.components.entity.weapon.WeaponStateComponent;
 import java.util.Objects;
 
 /** Derives the current action state for animatable entities. */
@@ -84,10 +84,10 @@ public class ActionStateSystem extends IteratingSystem {
     }
 
     Entity primaryWeapon = inventory.weapons.first();
-    WeaponComponent weaponComponent =
+    WeaponStateComponent weaponState =
         Objects.requireNonNull(
-            primaryWeapon.getComponent(WeaponComponent.class),
-            "ActionStateSystem expected the primary inventory entity to contain WeaponComponent.");
-    return weaponComponent.isAttacking;
+            primaryWeapon.getComponent(WeaponStateComponent.class),
+            "ActionStateSystem expected the primary inventory entity to contain WeaponStateComponent.");
+    return weaponState.isAttacking;
   }
 }

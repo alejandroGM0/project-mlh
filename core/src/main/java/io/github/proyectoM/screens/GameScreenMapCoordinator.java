@@ -11,6 +11,8 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.World;
 import io.github.proyectoM.components.entity.visual.LightComponent;
 import io.github.proyectoM.pathfinding.NavigationGrid;
+import io.github.proyectoM.registry.MapRegistry;
+import io.github.proyectoM.templates.MapTemplate;
 import io.github.proyectoM.world.LightMapLoader;
 import io.github.proyectoM.world.MapManager;
 
@@ -19,6 +21,7 @@ final class GameScreenMapCoordinator {
   private final World world;
   private final PooledEngine engine;
   private final RayHandler rayHandler;
+  private String mapId;
 
   private MapManager mapManager;
   private NavigationGrid navigationGrid;
@@ -29,16 +32,45 @@ final class GameScreenMapCoordinator {
     this.rayHandler = rayHandler;
   }
 
+  /**
+   * Initializes the map using the default map path.
+   */
   void initialize() {
+    initialize(null);
+  }
+
+  /**
+   * Initializes the map using the given registry map identifier.
+   *
+   * @param mapId the registry map id to load, or null for the default map
+   */
+  void initialize(String mapId) {
+    this.mapId = mapId;
     mapManager = new MapManager(world);
-    mapManager.loadDefaultMap();
+    loadMapById(mapId);
     rebuildMapState();
   }
 
   void reload() {
     clearLightEntities();
     disposeMapManager();
-    initialize();
+    initialize(mapId);
+  }
+
+  /**
+   * Loads a map by registry id, falling back to the default map when id is null or not found.
+   *
+   * @param mapId the registry map identifier, or null
+   */
+  private void loadMapById(String mapId) {
+    if (mapId != null) {
+      MapTemplate template = MapRegistry.getInstance().getTemplate(mapId);
+      if (template != null) {
+        mapManager.loadMap(template.tmxPath);
+        return;
+      }
+    }
+    mapManager.loadDefaultMap();
   }
 
   void render(OrthographicCamera camera) {
